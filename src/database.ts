@@ -97,7 +97,7 @@ export class FirebaseDatabase implements Database {
   public async get(chunkSize: number, chunkIndex: number) {
     const data = (await this.getSnapshot()).val() || {};
     const start = chunkSize * chunkIndex;
-    return Object.values(data).slice(start, start + chunkSize) as DatabaseItem[];
+    return Object.values(data).reverse().slice(start, start + chunkSize) as DatabaseItem[];
   }
 
   public async filter(predicate: (item: DatabaseItem) => boolean) {

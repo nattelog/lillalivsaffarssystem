@@ -84,11 +84,16 @@ const ProvisionInformation: FunctionComponent<ProvisionInformationProps> = (prop
     },
     {
       id: "1",
+      description: "Antal varor",
+      value: props.items.length,
+    },
+    {
+      id: "2",
       description: "Summa total",
       value: `${sumTotal} kr`,
     },
     {
-      id: "2",
+      id: "3",
       description: "Summa provision",
       value: `${sumProvision} kr`,
     },
