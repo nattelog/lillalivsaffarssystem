@@ -37,8 +37,10 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-const database = new FirebaseDatabase(firebase.database()); // DatabaseStub.fromGeneratedData(1);
-const auth = new FirebaseAuth(firebase.auth()); // new AuthStub();
+// const database = DatabaseStub.fromGeneratedData(1);
+const database = new FirebaseDatabase(firebase.database(), "products");
+// const auth = new AuthStub();
+const auth = new FirebaseAuth(firebase.auth());
 const Loading = () => (
   <Grid className={useStyles({}).container} container justify="center" alignContent="center">
     <Grid item>
@@ -79,7 +81,7 @@ export const Router = () => {
     getItems(0);
     setFilteredItems([]);
   });
-  const filterItems = (id: string) => database.filter((item) => item.submission === parseInt(id))
+  const filterItems = (id: string) => database.filterBy("submission", parseInt(id))
     .then(items => setFilteredItems(items));
   const clearFilter = () => setFilteredItems([]);
 

@@ -18,7 +18,7 @@ export function buildDatabaseItem(submission: number, price: number): DatabaseIt
 export interface Database {
   create: (item: DatabaseItem) => Promise<void>;
   get: (chunkSize: number, chunkIndex: number) => Promise<DatabaseItem[]>;
-  filter: (predicate: (item: DatabaseItem) => boolean) => Promise<DatabaseItem[]>;
+  filterBy: (key: string, value: any) => Promise<DatabaseItem[]>;
   delete: (ids: string[]) => Promise<void>;
   size: () => Promise<number>;
 }
@@ -66,8 +66,8 @@ export class DatabaseStub implements Database {
     return Object.values(this.data).slice(start, start + chunkSize);
   }
 
-  public async filter(predicate: (item: DatabaseItem) => boolean) {
-    return Object.values(this.data).filter(predicate);
+  public async filterBy(key: string, value: any) {
+    return Object.values(this.data).filter((data: any) => data[key] == value);
   }
 
   public async delete(ids: string[]) {
@@ -83,45 +83,51 @@ export class DatabaseStub implements Database {
 
 export class FirebaseDatabase implements Database {
   private readonly database: firebase.database.Database;
+  private readonly path: string;
   private readonly ref: firebase.database.Reference;
 
-  constructor(database: firebase.database.Database) {
+  constructor(database: firebase.database.Database, path: string) {
     this.database = database;
-    this.ref = database.ref("products");
+    this.path = path;
+    this.ref = database.ref(this.path);
   }
 
   public async create(item: DatabaseItem) {
-    await this.ref.push(item)
+    await this.ref.child(item.id).set(item);
   }
 
   public async get(chunkSize: number, chunkIndex: number) {
-    const data = (await this.getSnapshot()).val() || {};
     const start = chunkSize * chunkIndex;
-    return Object.values(data).reverse().slice(start, start + chunkSize) as DatabaseItem[];
+    const data = (await this
+      .ref
+      .orderByKey()
+      .limitToLast(chunkSize * (chunkIndex + 1))
+      .once("value"))
+
+    return Object
+      .values(data.val())
+      .reverse()
+      .slice(start, start + chunkSize) as DatabaseItem[];
   }
 
-  public async filter(predicate: (item: DatabaseItem) => boolean) {
-    const data = (await this.getSnapshot()).val() || {};
+  public async filterBy(key: string, value: any) {
+    const data = (await this
+      .ref
+      .orderByChild(key)
+      .equalTo(value)
+      .once("value"))
+      .val() || {};
 
-    return Object.values(data).filter(predicate) as DatabaseItem[];
+    return Object.values(data) as DatabaseItem[];
   }
 
   public async delete(ids: string[]) {
-    const data = (await this.getSnapshot()).val() || {};
-    const firebaseIds = Object.keys(data).filter(key => ids.includes(data[key].id));
-
-    for (const realId of firebaseIds) {
-      await this.database.ref(`products/${realId}`).remove();
+    for (const id of ids) {
+      await this.ref.child(id).remove();
     }
   }
 
   public async size() {
-    const snapshot = await this.getSnapshot();
-
-    return snapshot.numChildren();
-  }
-
-  private async getSnapshot() {
-    return this.ref.once("value");
+    return (await this.ref.orderByKey().once("value")).numChildren();
   }
 }
