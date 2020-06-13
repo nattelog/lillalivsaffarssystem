@@ -2,8 +2,5 @@
   "rules": {
     ".read": "auth != null",
     ".write": "auth != null",
-    "products": {
-      ".indexOn": "submission"
-    }
   }
 }

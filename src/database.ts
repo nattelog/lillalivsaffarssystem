@@ -83,13 +83,21 @@ export class DatabaseStub implements Database {
 
 export class FirebaseDatabase implements Database {
   private readonly database: firebase.database.Database;
-  private readonly path: string;
   private readonly ref: firebase.database.Reference;
+  private items: DatabaseItem[];
 
   constructor(database: firebase.database.Database, path: string) {
     this.database = database;
-    this.path = path;
-    this.ref = database.ref(this.path);
+    this.ref = database.ref(path);
+    this.items = [];
+
+    this.ref.on("child_added", (data: any) => {
+      this.items.unshift(data.val());
+    });
+
+    this.ref.on("child_removed", (data: any) => {
+      this.items = this.items.filter((item) => item.id !== data.key);
+    });
   }
 
   public async create(item: DatabaseItem) {
@@ -98,27 +106,17 @@ export class FirebaseDatabase implements Database {
 
   public async get(chunkSize: number, chunkIndex: number) {
     const start = chunkSize * chunkIndex;
-    const data = (await this
-      .ref
-      .orderByKey()
-      .limitToLast(chunkSize * (chunkIndex + 1))
-      .once("value"))
 
-    return Object
-      .values(data.val())
-      .reverse()
-      .slice(start, start + chunkSize) as DatabaseItem[];
+    if (this.items.length == 0) {
+      const fetchedData = (await this.ref.orderByKey().once("value"));
+      this.items = Object.values(fetchedData.val()).reverse() as DatabaseItem[];
+    }
+
+    return this.items.slice(start, start + chunkSize);
   }
 
   public async filterBy(key: string, value: any) {
-    const data = (await this
-      .ref
-      .orderByChild(key)
-      .equalTo(value)
-      .once("value"))
-      .val() || {};
-
-    return Object.values(data) as DatabaseItem[];
+    return this.items.filter((item: any) => item[key] == value);
   }
 
   public async delete(ids: string[]) {
@@ -127,7 +125,7 @@ export class FirebaseDatabase implements Database {
     }
   }
 
-  public async size() {
-    return (await this.ref.orderByKey().once("value")).numChildren();
+  public size() {
+    return Promise.resolve(this.items.length);
   }
 }
