@@ -90,18 +90,11 @@ export class FirebaseDatabase implements Database {
     this.database = database;
     this.ref = database.ref(path);
     this.items = [];
-
-    this.ref.on("child_added", (data: any) => {
-      this.items.unshift(data.val());
-    });
-
-    this.ref.on("child_removed", (data: any) => {
-      this.items = this.items.filter((item) => item.id !== data.key);
-    });
   }
 
   public async create(item: DatabaseItem) {
     await this.ref.child(item.id).set(item);
+    this.items.unshift(item);
   }
 
   public async get(chunkSize: number, chunkIndex: number) {
@@ -123,6 +116,8 @@ export class FirebaseDatabase implements Database {
     for (const id of ids) {
       await this.ref.child(id).remove();
     }
+
+    this.items = this.items.filter((item) => !ids.includes(item.id));
   }
 
   public size() {
