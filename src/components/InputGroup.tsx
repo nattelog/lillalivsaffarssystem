@@ -62,7 +62,9 @@ export const InputGroup: FunctionComponent<InputGroupProps> = (props) => {
             type={label === "Lösenord" ? "password" : "text"}
             value={inputs[index]}
             onChange={(event) => updateInput(index, event.target.value)}
-            onKeyDown={(event) => event.key === "Enter" && onButtonClick()}
+            onKeyDown={(event) => event.key === "Enter" &&
+              !buttonDisabled() &&
+              onButtonClick()}
           />
         </Grid>
       ))}
