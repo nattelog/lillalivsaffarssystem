@@ -16,6 +16,7 @@ interface InputGroupProps {
   buttonLabel: string;
   warningText?: string;
   verifyInput: (input: string[]) => boolean;
+  onInputChange?: (input: string[], refs: any[]) => void;
   onButtonClick: (input: string[]) => void;
 }
 
@@ -32,6 +33,7 @@ const useStyles = makeStyles<Theme, StyleProps>((theme: Theme) => createStyles({
 export const InputGroup: FunctionComponent<InputGroupProps> = (props) => {
   const warningText = props.warningText || "Endast siffror är tillåtna värden.";
   const defaultInputs = props.labels.map(() => "");
+  const refs = props.labels.map(() => React.useRef());
   const [inputs, setInputs] = useState<string[]>(defaultInputs);
   const validInput = props.verifyInput(inputs);
   const emptyInput = inputs.some(value => value.length === 0);
@@ -46,15 +48,21 @@ export const InputGroup: FunctionComponent<InputGroupProps> = (props) => {
   };
   const classes = useStyles({ displayErrorText: !validInput && !emptyInput});
 
+  React.useEffect(() => {
+    props.onInputChange && props.onInputChange(inputs, refs as any[]);
+  }, [inputs, ...refs])
+
   return (
     <Grid container spacing={2} direction="row">
       {props.labels.map((label, index) => (
         <Grid key={label} item xs={12}>
           <TextField
+            inputRef={refs[index]}
             label={label}
             type={label === "Lösenord" ? "password" : "text"}
             value={inputs[index]}
             onChange={(event) => updateInput(index, event.target.value)}
+            onKeyDown={(event) => event.key === "Enter" && onButtonClick()}
           />
         </Grid>
       ))}

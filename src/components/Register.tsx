@@ -52,6 +52,14 @@ export const Register: FunctionComponent<RegisterProps> = (props) => {
     `${from}-${to} av ${count}`
   const classes = useStyles({});
   const verifyInput = (input: string[]) => input.every(val => /^\d*$/.test(val));
+  const onRegisterInputChange = (input: string[], refs: any[]) => {
+    refs[0].current.focus();
+
+    // Always focus on "Pris" once "Inlämningsnummer" has length 4.
+    if (input[0].length === 4) {
+      refs[1].current.focus();
+    }
+  };
   const onRegisterInput = (input: string[]) => props.onRegister(buildDatabaseItem(parseInt(input[0]),
                                                                                   parseInt(input[1])));
 
@@ -70,6 +78,7 @@ export const Register: FunctionComponent<RegisterProps> = (props) => {
             labels={["Inlämningsnummer", "Pris"]}
             buttonLabel="Registrera"
             verifyInput={verifyInput}
+            onInputChange={onRegisterInputChange}
             onButtonClick={onRegisterInput}
           />
         </Grid>

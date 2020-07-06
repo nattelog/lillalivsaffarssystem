@@ -35,6 +35,11 @@ export const Login: FunctionComponent<LoginProps> = (props) => {
     setIsRetry(true);
     props.onLogin(username, password);
   };
+  const onInputChange = (input: string[], refs: any[]) => {
+    if (input.every((field: string) => field.length == 0)) {
+      refs[0].current.focus();
+    }
+  };
 
   return (
     <Container maxWidth="md">
@@ -61,6 +66,7 @@ export const Login: FunctionComponent<LoginProps> = (props) => {
                     buttonLabel="Logga in"
                     warningText="Ogiltigt användarnamn"
                     onButtonClick={onButtonClick}
+                    onInputChange={onInputChange}
                     verifyInput={verifyInput}
                   />
                 </Grid>
